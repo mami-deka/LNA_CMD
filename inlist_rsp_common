@@ -1,0 +1,406 @@
+
+&star_job
+
+      show_log_description_at_start = .false.
+
+      create_RSP_model = .true.
+
+      save_model_when_terminate = .true.
+      save_model_filename = 'final.mod'
+
+      initial_zfracs = 6
+
+      color_num_files=2
+      color_file_names(2)='blackbody_johnson.dat'
+      color_num_colors(2)=5
+
+      set_initial_age = .true.
+      initial_age = 0
+
+      set_initial_model_number = .true.
+      initial_model_number = 0
+
+      profile_starting_model = .true.
+      
+      set_initial_cumulative_energy_error = .true.
+      new_cumulative_energy_error = 0d0
+
+/ ! end of star_job namelist
+
+
+&eos
+      use_FreeEOS = .true.
+/
+
+
+&kap
+      kap_file_prefix = 'a09'
+      kap_lowT_prefix = 'lowT_fa05_a09p'
+      kap_CO_prefix = 'a09_co'
+      Zbase = -1 !0.02d0
+
+! opacity controls
+      cubic_interpolation_in_X = .false.
+      cubic_interpolation_in_Z = .false.
+      include_electron_conduction = .true.
+      use_Zbase_for_Type1 = .true.
+      use_Type2_opacities = .true.
+      kap_Type2_full_off_X  =  0.71d0
+      kap_Type2_full_on_X  =  0.70d0
+      kap_Type2_full_off_dZ  =  1d-3
+      kap_Type2_full_on_dZ  =  1d-2
+
+/
+
+&controls  
+
+      !### radial stellar pulsations (RSP)
+         ! inspired by Radec Smolec's program
+         ! if you use RSP, please cite the following in addition to mesa:
+         ! R.Smolec and P.Moskalik, ACTA ASTRONOMICA, 58(2008), pp. 193-232.
+         !x_integer_ctrl(1) = 10 ! which period to check
+  	 !x_ctrl(1) = 0.14715d0 ! expected period (in days) 
+
+
+         ! must set mass, Teff, L, X, and Z.
+         RSP_mass = -1 ! (Msun)
+         RSP_Teff = -1 ! (K)
+         RSP_L = -1 ! (Lsun)
+         RSP_X = -1 ! hydrogen mass fraction
+         RSP_Z = -1 ! metals mass fraction
+
+         ! Parameters of the convection model.
+         ! Note that RSP_alfap, RSP_alfas, RSP_alfac, RSP_alfad and RSP_gammar
+         ! are expressed in the units of standard values.
+         ! Standard values are the ones for which static version of the Kuhfuss
+         ! model reduces to standard MLT.
+         ! See Table 1 in Smolec & Moskalik 2008
+         ! http://adsabs.harvard.edu/abs/2008AcA....58..193S
+         ! for standard values and the description of the parameters.
+         
+         RSP_alfa =      1.5d0         ! mixing length; alfa = 0 gives a purely radiative model.
+         RSP_alfac =     1.0d0         ! convective flux; Lc ~ RSP_alfac
+         RSP_alfas =     1.0d0         ! turbulent source; Lc ~ 1/ALFAS; PII ~ RSP_alfas
+         RSP_alfad =     1.0d0         ! turbulent dissipation; damp ~ RSP_alfad
+         RSP_alfap =     1.0d0         ! turbulent pressure; Pt ~ alfap     
+         RSP_alfat =     0.01d0         ! turbulent flux; Lt ~ RSP_alfat; overshooting.
+         RSP_alfam =     0.4d0        ! eddy viscosity; Chi & Eq ~ RSP_alfam
+         RSP_gammar =    0.0d0         ! radiative losses; dampR ~ RSP_gammar          
+                  
+         ! time weighting for end-of-step vs start-of-step values in equations.
+         ! 1 corresponds to fully implicit scheme - stable, but can have large numerical damping.
+         ! 0.5 corresponds to trapezoidal rule integration - gives least numerical damping.
+         ! do not use values less than 0.5.  strongly recommend 0.5 for theta and thetat.
+         ! don't mess with any of these unless you know what you are doing or like to watch the code crash.
+         
+         RSP_theta =      0.5d0        ! Pgas and Prad
+         RSP_thetat =     0.5d0        ! Pturb
+         RSP_thetae =     0.5d0        ! erad in terms using f_Edd
+         RSP_thetaq =     1.0d0        ! avQ
+         RSP_thetau =     1.0d0        ! Eq and Uq
+         RSP_wtr =        0.6667d0     ! Lr
+         RSP_wtc =        0.6667d0     ! Lc
+         RSP_wtt =        0.6667d0     ! Lt
+         RSP_gam =        1.0d0        ! Et src_snk
+         
+         ! controls for building the initial model
+         RSP_nz = 200 ! total number of zones in initial model
+         RSP_nz_outer = 60 ! number of zones in outer region of initial model
+         RSP_T_anchor = 11d3 ! approx temperature at base of outer region
+         RSP_T_inner = 2d6 ! T at inner boundary of initial model
+         
+         RSP_max_outer_dm_tries = 100 ! give up if fail to find outer dm in this many attempts
+         RSP_max_inner_scale_tries = 100 ! give up if fail to find inner dm scale factor in this many attempts
+         RSP_T_anchor_tolerance = 1d-8 
+            ! allowed relative difference between T at base of outer region and T_anchor
+            ! if fail trying to create initial model, try increasing this to 1d-6 or more
+         RSP_T_inner_tolerance = 1d-8 
+            ! allowed relative difference between T at inner boundary and T_inner
+            ! if fail trying to create initial model, try increasing this to 1d-6 or more
+         
+         RSP_relax_initial_model = .true.
+         RSP_relax_alfap_before_alfat = .true. ! else reverse the order         
+         RSP_relax_max_tries = 1000   
+         RSP_relax_dm_tolerance = 1d-6
+         
+
+        ! when to stop
+         RSP_max_num_periods = 0! ignore if < 0
+        max_model_number = 1
+         
+         use_RSP_new_start_scheme = .false.
+    !     RSP_relax_max_abs_rel_hse_err = 1d-3
+
+                  
+         
+         ! output data for work integrals during a particular period
+         RSP_work_period = -1
+         RSP_work_filename = 'work.data'
+         
+         ! output data for 3d map.  format same as for gnuplot pm3d 
+         RSP_write_map = .false.
+         RSP_map_columns_filename = 'map_columns.list' ! subset of profile columns list
+            ! items listed in your map columns must also appear in your profile columns
+         RSP_map_filename = 'map.data'
+         RSP_map_first_period = -1
+         RSP_map_last_period = -1
+         RSP_map_zone_interval = 2
+         RSP_map_history_filename = 'map_history.data'
+         
+         ! rsp hooks
+         use_other_RSP_linear_analysis = .false.         
+ !       use_other_RSP_eddington_factor = .false.
+         use_other_RSP_build_model = .false.
+
+         ! for special tests
+         ! can set ALFA = 0 for pure radiative with no turbulence or convection.
+         ! can set gamma_law_hydro > 0 and it will be used by rsp for eos.
+         ! can set zero_gravity = .true.
+         ! can set opacity to be constant times density.
+         RSP_kap_density_factor = -1 ! ignore if < 0
+            ! else set opacity to this times density
+         
+         ! rsp misc
+         RSP_efl0 =      1.0d2        
+         RSP_nmodes = 11 ! number of modes LINA will calculate for initial model
+         RSP_trace_RSP_build_model = .false.
+
+
+
+
+
+! output controls
+
+   ! for cases in which you have a run that has reached steady pulses
+   ! and you want to look at plots of just a few periods to see the details,
+   ! i suggest the following method. interrupt the run soon after
+   ! it makes a photo.  remove or delete LOGS/history.data to force
+   ! creation of a new one when restart.  edit the inlist to set
+   ! history_interval to 1 to get maximum time resolution.  
+   ! restart the run and let it go for as many periods as desired.   
+
+      num_trace_history_values = 3
+      trace_history_value_name(1) = 'rel_E_err'
+      trace_history_value_name(2) = 'log_rel_run_E_err'
+      trace_history_value_name(3) = 'rsp_GREKM_avg_abs'
+      
+
+      photo_interval = 1000     
+      profile_interval = 1000        
+      history_interval = 1000          
+      terminal_interval = 4000     
+      max_num_profile_models = 100   
+      log_directory='LOGS'
+      photo_directory='photos'
+/ ! end of controls namelist
+
+
+
+&pgstar
+         pgstar_interval = 30
+
+         pgstar_xaxis_label_scale = 1.0
+         pgstar_left_yaxis_label_scale = 1.0
+         pgstar_right_yaxis_label_scale = 1.0
+
+         pgstar_xaxis_label_disp = 2.5
+         pgstar_left_yaxis_label_disp = 4.2 ! 3.4
+         pgstar_right_yaxis_label_disp = 4.4
+
+
+         Grid2_win_width = 10
+         Grid2_win_aspect_ratio = 0.75 ! aspect_ratio = height/width
+         Grid2_num_cols = 3 ! divide plotting region into this many equal width cols
+         Grid2_num_rows = 8 ! divide plotting region into this many equal height rows
+         Grid2_num_plots = 6 ! <= 10
+         
+         Grid2_plot_name(1) = 'Profile_Panels1'
+         Grid2_plot_row(1) = 1 ! number from 1 at top
+         Grid2_plot_rowspan(1) = 3 ! plot spans this number of rows
+         Grid2_plot_col(1) =  1 ! number from 1 at left
+         Grid2_plot_colspan(1) = 2 ! plot spans this number of columns 
+         Grid2_plot_pad_left(1) = -0.02 ! fraction of full window width for padding on left
+         Grid2_plot_pad_right(1) = 0.09 ! fraction of full window width for padding on right
+         Grid2_plot_pad_top(1) = -0.02 ! fraction of full window height for padding at top
+         Grid2_plot_pad_bot(1) = -0.10 ! fraction of full window height for padding at bottom
+         Grid2_txt_scale_factor(1) = 0.7 ! multiply txt_scale for subplot by this
+         
+         Grid2_plot_name(2) = 'History_Panels1'
+         Grid2_plot_row(2) = 4 ! number from 1 at top
+         Grid2_plot_rowspan(2) = 3 ! plot spans this number of rows
+         Grid2_plot_col(2) =  1 ! number from 1 at left
+         Grid2_plot_colspan(2) = 2 ! plot spans this number of columns 
+         Grid2_plot_pad_left(2) = -0.02 ! fraction of full window width for padding on left
+         Grid2_plot_pad_right(2) = 0.09 ! fraction of full window width for padding on right
+         Grid2_plot_pad_top(2) = 0.18 ! fraction of full window height for padding at top
+         Grid2_plot_pad_bot(2) = -0.02 ! fraction of full window height for padding at bottom
+         Grid2_txt_scale_factor(2) = 0.7 ! multiply txt_scale for subplot by this
+         
+         Grid2_plot_name(3) = 'Text_Summary1'
+         Grid2_plot_row(3) = 7 ! number from 1 at top
+         Grid2_plot_rowspan(3) = 2 ! plot spans this number of rows
+         Grid2_plot_col(3) =  1 ! number from 1 at left
+         Grid2_plot_colspan(3) = 3 ! plot spans this number of columns 
+         Grid2_plot_pad_left(3) = -0.08 ! fraction of full window width for padding on left
+         Grid2_plot_pad_right(3) = 0.0 ! fraction of full window width for padding on right
+         Grid2_plot_pad_top(3) = 0.12 ! fraction of full window height for padding at top
+         Grid2_plot_pad_bot(3) = -0.04 ! fraction of full window height for padding at bottom
+         Grid2_txt_scale_factor(3) = 0.2 ! multiply txt_scale for subplot by this
+         
+         Grid2_plot_name(4) = 'logL_R'
+         Grid2_plot_row(4) = 5 ! number from 1 at top
+         Grid2_plot_rowspan(4) = 2 ! plot spans this number of rows
+         Grid2_plot_col(4) =  3 ! number from 1 at left
+         Grid2_plot_colspan(4) = 1 ! plot spans this number of columns 
+         Grid2_plot_pad_left(4) = 0.07 ! fraction of full window width for padding on left
+         Grid2_plot_pad_right(4) = 0.0 ! fraction of full window width for padding on right
+         Grid2_plot_pad_top(4) = 0.06 ! fraction of full window height for padding at top
+         Grid2_plot_pad_bot(4) = -0.02 ! fraction of full window height for padding at bottom
+         Grid2_txt_scale_factor(4) = 0.7 ! multiply txt_scale for subplot by this
+         logL_R_title = ''      
+         
+         Grid2_plot_name(5) = 'logL_v'
+         Grid2_plot_row(5) = 3 ! number from 1 at top
+         Grid2_plot_rowspan(5) = 2 ! plot spans this number of rows
+         Grid2_plot_col(5) = 3 ! number from 1 at left
+         Grid2_plot_colspan(5) = 1 ! plot spans this number of columns 
+         Grid2_plot_pad_left(5) = 0.07 ! fraction of full window width for padding on left
+         Grid2_plot_pad_right(5) = 0.0 ! fraction of full window width for padding on right
+         Grid2_plot_pad_top(5) = 0.02 ! fraction of full window height for padding at top
+         Grid2_plot_pad_bot(5) = 0.02 ! fraction of full window height for padding at bottom
+         Grid2_txt_scale_factor(5) = 0.7 ! multiply txt_scale for subplot by this
+         logL_v_title = ''      
+         
+         Grid2_plot_name(6) = 'logL_Teff'
+         Grid2_plot_row(6) = 1 ! number from 1 at top
+         Grid2_plot_rowspan(6) = 2 ! plot spans this number of rows
+         Grid2_plot_col(6) = 3 ! number from 1 at left
+         Grid2_plot_colspan(6) = 1 ! plot spans this number of columns 
+         Grid2_plot_pad_left(6) = 0.07 ! fraction of full window width for padding on left
+         Grid2_plot_pad_right(6) = 0.0 ! fraction of full window width for padding on right
+         Grid2_plot_pad_top(6) = -0.02 ! fraction of full window height for padding at top
+         Grid2_plot_pad_bot(6) = 0.06 ! fraction of full window height for padding at bottom
+         Grid2_txt_scale_factor(6) = 0.7 ! multiply txt_scale for subplot by this
+         logL_Teff_title = ''      
+
+   !   Grid2_file_flag = .true.
+         file_digits = 7
+         Grid2_file_dir = 'png'
+         Grid2_file_prefix = 'grid1'
+         Grid2_file_interval = 10 ! output when mod(model_number,Grid2_file_interval)==0
+
+
+         History_Panels1_title = ''      
+         History_Panels1_num_panels = 2
+
+         !History_Panels1_xaxis_name='model_number'
+         History_Panels1_xaxis_name='star_age_day'
+         History_Panels1_max_width = 50 ! only used if > 0.  causes xmin to move with xmax.
+         
+         History_Panels1_yaxis_name(1) = 'effective_T' 
+         History_Panels1_yaxis_reversed(1) = .false.
+         History_Panels1_ymin(1) = -101d0 ! only used if /= -101d0
+         History_Panels1_ymax(1) = -101d0 ! only used if /= -101d0        
+         History_Panels1_dymin(1) = -1 
+         
+         History_Panels1_other_yaxis_name(1) = 'log_L' 
+         History_Panels1_other_yaxis_reversed(1) = .false.
+         History_Panels1_other_ymin(1) = -101d0 ! only used if /= -101d0
+         History_Panels1_other_ymax(1) = -101d0 ! only used if /= -101d0        
+         History_Panels1_other_dymin(1) = -1 
+         
+         History_Panels1_yaxis_name(2) = 'radius'  !  'star_mass' 
+         History_Panels1_yaxis_reversed(2) = .false.
+         History_Panels1_ymin(2) = -101d0 ! only used if /= -101d0
+         History_Panels1_ymax(2) = -101d0 ! only used if /= -101d0        
+         History_Panels1_dymin(2) = -1 
+         
+         History_Panels1_other_yaxis_name(2) = 'v_surf_km_s'
+         History_Panels1_other_yaxis_reversed(2) = .false.
+         History_Panels1_other_ymin(2) = -101d0 ! only used if /= -101d0
+         History_Panels1_other_ymax(2) = -101d0 ! only used if /= -101d0        
+         History_Panels1_other_dymin(2) = -1 
+         
+         History_Panels1_yaxis_name(3) = 'r_center'  !  'star_mass' 
+         History_Panels1_yaxis_reversed(3) = .false.
+         History_Panels1_ymin(3) = -101d0 ! only used if /= -101d0
+         History_Panels1_ymax(3) = -101d0 ! only used if /= -101d0        
+         History_Panels1_dymin(3) = -1 
+         
+         History_Panels1_other_yaxis_name(3) = 'v_center'
+         History_Panels1_other_yaxis_reversed(3) = .false.
+         History_Panels1_other_ymin(3) = -101d0 ! only used if /= -101d0
+         History_Panels1_other_ymax(3) = -101d0 ! only used if /= -101d0        
+         History_Panels1_other_dymin(3) = -1 
+
+
+      Profile_Panels1_win_flag = .false.
+         Profile_Panels1_title = ''      
+         
+         Profile_Panels1_xaxis_name = 'logtau'
+         Profile_Panels1_xaxis_reversed = .true.
+         Profile_Panels1_xmin = -101D0
+         Profile_Panels1_xmax = 6.0 ! -101D0
+         Profile_Panels1_show_mix_regions_on_xaxis = .true.
+         
+         Profile_Panels1_num_panels = 4 
+                 
+         Profile_Panels1_yaxis_name(1) = 'v_div_cs'         
+         Profile_Panels1_ymax(1) = -101D0 ! 1
+         Profile_Panels1_ymin(1) = -101D0 ! -1
+         Profile_Panels1_other_yaxis_name(1) = 'vel_km_per_s'
+         Profile_Panels1_other_ymax(1) = -101D0 !  2e6 
+         Profile_Panels1_other_ymin(1) = -101D0 ! -2e6
+                  
+         Profile_Panels1_yaxis_name(2) = 'entropy'         
+         Profile_Panels1_other_yaxis_name(2) = 'opacity' 
+         
+         Profile_Panels1_yaxis_name(3) = 'logRho'         
+         Profile_Panels1_ymax(3) = -101D0 ! 5.7    
+         Profile_Panels1_ymin(3) = -101D0 ! 4.2     
+         Profile_Panels1_other_yaxis_name(3) = 'logT' 
+         Profile_Panels1_other_ymax(3) = -101D0 ! 6.45 
+         Profile_Panels1_other_ymin(3) = -101D0 ! 4
+                  
+         Profile_Panels1_yaxis_name(4) = 'logL'  ! 'zone' !        
+         Profile_Panels1_ymax(4) = -101D0 ! 3.7  
+         Profile_Panels1_ymin(4) = -101D0 ! 3.1 
+         Profile_Panels1_other_yaxis_name(4) = 'lum_div_Ledd' 
+         Profile_Panels1_other_ymax(4) = -101D0 ! 
+         Profile_Panels1_other_ymin(4) = -101D0 ! 
+         
+
+         Profile_Panels1_file_flag = .false.
+         Profile_Panels1_file_dir = 'png'
+         Profile_Panels1_file_prefix = 'profile_panels1_'
+         Profile_Panels1_file_interval = 1 ! output when mod(model_number,Profile_Panels1_file_interval)==0
+
+         Text_Summary1_num_rows = 4 ! <= 20
+         Text_Summary1_num_cols = 4 ! <= 20
+         Text_Summary1_name(:,:) = ''
+         
+         Text_Summary1_name(1,1) = 'model_number'
+         Text_Summary1_name(2,1) = 'star_age_day'
+         Text_Summary1_name(3,1) = 'time_step_sec'
+         Text_Summary1_name(4,1) = 'rsp_num_periods'
+         Text_Summary1_name(5,1) = ''
+         
+         Text_Summary1_name(1,2) = 'v_surf_km_s'
+         Text_Summary1_name(2,2) = 'radius'
+         Text_Summary1_name(3,2) = 'log_R'
+         Text_Summary1_name(4,2) = 'rsp_period_in_days'
+         Text_Summary1_name(5,2) = ''
+         
+         Text_Summary1_name(1,3) = 'effective_T'
+         Text_Summary1_name(2,3) = 'log_Teff'
+         Text_Summary1_name(3,3) = 'luminosity'
+         Text_Summary1_name(4,3) = 'log_L'
+         Text_Summary1_name(5,3) = ''
+         
+         Text_Summary1_name(1,4) = 'star_mass'
+         Text_Summary1_name(2,4) = 'num_zones'
+         Text_Summary1_name(3,4) = 'num_retries'
+         Text_Summary1_name(4,4) = 'num_backups'
+         Text_Summary1_name(5,4) = ''
+
+/ ! end of pgstar namelist
