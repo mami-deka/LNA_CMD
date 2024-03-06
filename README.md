@@ -1,4 +1,4 @@
 # LNA_CMD
-A detailed study of Colour-Magnitude Diagram of Variable stars: Classical Cepheids and Type II Cepheids
+The Instability Strips of Cepheids]{Bridging theory and observations in stellar pulsations: The impact of convection and metallicity on the instability strips of Classical and Type-II Cepheids
 
-In this repository, you will find the MESA-RSP inlist used in this analysis.
+In this repository, you will find the MESA-RSP and MESA inlist used in this analysis.
