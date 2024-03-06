@@ -1,0 +1,156 @@
+! Project inlist file for GYRE in MESA / MiniLab 1
+!
+! (pre-main sequence to ZAMS)
+
+&star_job
+
+  ! Begin with a pre-main sequence model
+
+  create_pre_main_sequence_model = .true.
+
+  pre_ms_T_c = 1d5
+
+  ! Abundances
+
+  initial_zfracs = 6
+  change_initial_net = .true.
+  new_net_name = 'pp_and_cno_extras.net' 
+  
+  set_rate_c12ag = 'Kunz'
+  set_rate_n14pg = 'jina reaclib'
+
+ ! Display on-screen plots
+
+  pgstar_flag = .false.
+
+  ! Save model at end
+
+  save_model_when_terminate = .true.
+  save_model_filename='zams.mod'
+  
+  change_v_flag = .true.
+  new_v_flag = .true.
+  
+  !Rotation
+  new_rotation_flag = .false.
+  change_rotation_flag = .false.
+
+  change_v_flag = .true.  
+  new_v_flag = .true.
+
+  set_surf_rotation_v_step_limit = 5
+  new_surface_rotation_v = 40
+  set_near_zams_surface_rotation_v_steps = 10 
+
+  
+/ !end of star_job namelist
+
+&eos
+
+!      use_FreeEOS = .true.
+
+/ ! end of eos namelist
+
+&kap
+      kap_file_prefix = 'a09'
+      kap_lowT_prefix = 'lowT_fa05_a09p'
+      kap_CO_prefix = 'a09_co'
+      Zbase = -1 !0.02d0
+
+! opacity controls
+      cubic_interpolation_in_X = .false.
+      cubic_interpolation_in_Z = .false.
+      include_electron_conduction = .true.
+      use_Zbase_for_Type1 = .true.
+      use_Type2_opacities = .true.
+      kap_Type2_full_off_X  =  0.71d0
+      kap_Type2_full_on_X  =  0.70d0
+      kap_Type2_full_off_dZ  =  1d-3
+      kap_Type2_full_on_dZ  =  1d-2
+
+/
+
+&controls
+
+  ! Mass & metalicity
+
+ initial_mass = -1 !1.88
+
+ initial_Y = -1 !0.27028
+ initial_Z = -1 !0.016
+
+  ! Grid and timestep
+   
+  mesh_delta_coeff = 0.5
+
+  max_years_for_timestep = 1d6
+
+  ! Stopping condition
+
+  stop_near_zams = .true.
+
+  ! Gold tolerances
+
+  use_gold_tolerances = .true.
+  use_dedt_form_of_energy_eqn = .true.
+   
+  ! Convective mixing
+  
+  mixing_length_alpha = 1.88d0
+  MLT_option = 'Henyey'
+   use_Ledoux_criterion = .true.
+   alpha_semiconvection = 1
+
+    overshoot_scheme(1) = 'step'
+    overshoot_zone_type(1) = 'burn_H'
+    overshoot_zone_loc(1) = 'core'
+    overshoot_bdy_loc(1) = 'top'
+    overshoot_f(1) = 0.019
+    overshoot_f0(1) = 0.0095
+
+    overshoot_scheme(2) = 'step'
+    overshoot_zone_type(2) = 'nonburn'
+    overshoot_zone_loc(2) = 'shell'
+    overshoot_bdy_loc(2) = 'bottom'
+    overshoot_f(2) = 0.019
+    overshoot_f0(2) = 0.0095
+
+   predictive_mix(1) = .true.
+   predictive_zone_type(1) = 'any'
+   predictive_zone_loc(1) = 'core' 
+   predictive_bdy_loc(1) = 'any'
+
+   predictive_mix(2) = .true.
+   predictive_zone_type(2) = 'any'
+   predictive_zone_loc(2) = 'surf' 
+   predictive_bdy_loc(2) = 'any'
+
+   varcontrol_target = 1d-4
+
+   delta_HR_limit = 0.002
+
+   xa_central_upper_limit_species(1) = 'c12'
+   xa_central_upper_limit(1) = 0.2d0
+
+
+
+
+
+ ! atmosphere
+   atm_option = 'table'
+   atm_table = 'photosphere'   
+
+
+      photo_interval = 1000     
+      profile_interval = 1         
+      history_interval = 1          
+      terminal_interval = 4000    
+      max_num_profile_models = -1    
+      log_directory='LOGS'
+      photo_directory='photos'
+
+
+/ ! end of controls namelist
+
+
+
